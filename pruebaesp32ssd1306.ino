@@ -6,7 +6,8 @@ int displayBuffer[128];
 int samplingBuffer[8192];
 int pos = 8192;
 int ch_sel = 0;
-int CH_SEL_BTN = 27;
+int CH_SEL_BTN1 = 27;
+int CH_SEL_BTN2 = 28;
 int sample_pin = 13;
 
 void fillSB(){
@@ -17,7 +18,8 @@ void fillSB(){
 }
 
 void setup() {
-  pinMode(CH_SEL_BTN, INPUT);
+  pinMode(CH_SEL_BTN1, INPUT);
+  pinMode(CH_SEL_BTN2, INPUT);
   display.init();
   display.flipScreenVertically();
   display.display();
@@ -30,14 +32,16 @@ void loop() {
    //samplingBuffer[pos]=analogRead(13);
    //delayMicroseconds(10);
    //pos++;
-   int ch_state = digitalRead(CH_SEL_BTN);
-   if(ch_state == HIGH){
-      ch_sel++;
-      if(ch_sel==3) ch_sel=0;
-      if(ch_sel==0) sample_pin = 12;
-      if(ch_sel==1) sample_pin = 14;
-      if(ch_sel==2) sample_pin = 13;
-      do{ch_state = digitalRead(CH_SEL_BTN);}while(ch_state == HIGH);
+   int ch_state_1 = digitalRead(CH_SEL_BTN1);
+   int ch_state_2 = digitalRead(CH_SEL_BTN2);
+   if(ch_state_1 == HIGH && ch_state_2 == LOW){
+      sample_pin = 12;
+   }
+   else if(ch_state_1 == LOW && ch_state_2 == HIGH){
+      sample_pin = 14;
+   }
+   else{
+       sample_pin = 13;
    }
    fillSB();
    if(pos == 8192){
@@ -56,18 +60,18 @@ void loop() {
     int t_mid;
     int t_max;
     for(int i=0; i < pos; i++){
-        if(samplingBuffer[i]>(min_signal + 0.05*max_signal) && flag==0){
+        if(samplingBuffer[i]>(min_signal + 0.1*(max_signal-min_signal)) && flag==0){
            flag=1; 
         }
-        if(samplingBuffer[i]<=(min_signal) && flag==1){
+        if(samplingBuffer[i]<=(min_signal+0.1*(max_signal-min_signal)) && flag==1){
             t_min=i;
             flag=2;
         }
-        if(samplingBuffer[i]>=(0.90*max_signal) && flag==2){
+        if(samplingBuffer[i]>=(min_signal + 0.85*(max_signal-min_signal)) && flag==2){
             t_mid=i;
             flag=3;
         }
-        if(samplingBuffer[i]<=(min_signal) && flag==3){
+        if(samplingBuffer[i]<=(min_signal+0.1*(max_signal-min_signal)) && flag==3){
             t_max=i;
             flag=4; 
         }
@@ -97,13 +101,13 @@ void loop() {
       int pixel = (int) - (displayBuffer[i] * 48 / (max_signal+1)) + 63;
       if(i==0) prev_pixel=pixel;
       display.setPixel(i,pixel);
-      if(abs(pixel-prev_pixel) > 1 && abs(pixel-prev_pixel) <= 25){
+      if(abs(pixel-prev_pixel) > 1 && abs(pixel-prev_pixel) <= 15){
         display.drawLine(i-1,prev_pixel,i,pixel);
       }
-      else if(prev_pixel-pixel > 25){
+      else if(prev_pixel-pixel > 15){
         display.drawVerticalLine(i,pixel,prev_pixel-pixel);
       }
-      else if(pixel-prev_pixel > 25){
+      else if(pixel-prev_pixel > 15){
         display.drawVerticalLine(i,prev_pixel,pixel-prev_pixel);
       }
       display.setPixel(i,40);
@@ -112,6 +116,11 @@ void loop() {
     int vppInt = (int)((max_signal-min_signal)*330/4096);
     float vpp = vppInt/100; 
     //display.drawString(0,0,"F="+String(88062/(t_max-t_min))+"Hz Vpp="+String(scale));//(float(vppInt)/100)+"V");
+    display.drawVerticalLine(0,0,64);
+    display.drawVerticalLine(64,0,64);
+    display.drawHorizontalLine(0,0,128);
+    display.drawHorizontalLine(0,8,128);
+    display.drawHorizontalLine(0,64,128);
     display.drawString(0,0,"F="+String(88062/(t_max-t_min))+"Hz Vpp="+(float(vppInt)/100)+"V"+" CH"+String(ch_sel+1));
     display.display();
     delay(1000);
