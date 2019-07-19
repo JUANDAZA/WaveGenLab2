@@ -6,8 +6,8 @@ int displayBuffer[128];
 int samplingBuffer[8192];
 int pos = 8192;
 int ch_sel = 0;
-int CH_SEL_BTN1 = 27;
-int CH_SEL_BTN2 = 28;
+int CH_SEL_BTN1 = 19;
+int CH_SEL_BTN2 = 23;
 int sample_pin = 13;
 
 void fillSB(){
@@ -36,12 +36,15 @@ void loop() {
    int ch_state_2 = digitalRead(CH_SEL_BTN2);
    if(ch_state_1 == HIGH && ch_state_2 == LOW){
       sample_pin = 12;
+      ch_sel = 0;
    }
    else if(ch_state_1 == LOW && ch_state_2 == HIGH){
       sample_pin = 14;
+      ch_sel = 1;
    }
-   else{
+   else if(ch_state_1 == HIGH && ch_state_2 == HIGH){
        sample_pin = 13;
+       ch_sel = 2;
    }
    fillSB();
    if(pos == 8192){
@@ -117,11 +120,11 @@ void loop() {
     float vpp = vppInt/100; 
     //display.drawString(0,0,"F="+String(88062/(t_max-t_min))+"Hz Vpp="+String(scale));//(float(vppInt)/100)+"V");
     display.drawVerticalLine(0,0,64);
-    display.drawVerticalLine(64,0,64);
+    display.drawVerticalLine(127,0,64);
     display.drawHorizontalLine(0,0,128);
-    display.drawHorizontalLine(0,8,128);
-    display.drawHorizontalLine(0,64,128);
-    display.drawString(0,0,"F="+String(88062/(t_max-t_min))+"Hz Vpp="+(float(vppInt)/100)+"V"+" CH"+String(ch_sel+1));
+    display.drawHorizontalLine(0,12,128);
+    display.drawHorizontalLine(0,63,128);
+    display.drawString(3,0,"F="+String(88062/(t_max-t_min))+"Hz Vpp="+(float(vppInt)/100)+"V"+" CH"+String(ch_sel+1));
     display.display();
     delay(1000);
     pos = 8192;
